@@ -1,0 +1,61 @@
+---
+title: "Final Project"
+author: "Audrey Ling Huen Wong"
+date: "12/6/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+library(tidyverse)
+library(lubridate)
+library(dplyr)
+storms <- read_csv("StormEvents_details-ftp_v1.0_d2020_c20211019.csv")
+problems(storms)
+```
+
+
+```{r filter data}
+table(storms$STATE)
+storms_new <- filter(storms, storms$STATE !="PUERTO RICO", storms$STATE !="GUAM") %>% 
+  select(STATE, MONTH_NAME,EVENT_TYPE, CZ_NAME, BEGIN_DATE_TIME, END_DATE_TIME, INJURIES_DIRECT, INJURIES_INDIRECT, DEATHS_DIRECT, DEATHS_INDIRECT, DAMAGE_PROPERTY, DAMAGE_CROPS, MAGNITUDE, MAGNITUDE_TYPE, EPISODE_NARRATIVE)
+```
+
+
+## Including Plots
+
+```{r plot}
+# Which states have the most storms in the US？
+storms_new  %>%
+  group_by(STATE) %>%
+  summarise(count=n()) %>%
+  ggplot() + geom_col(aes(STATE,count)) + theme(axis.text.x = element_text(angle = 90))
+```
+
+
+```{r regions}
+# Which regions have the most storms in the US？
+
+regions <- read_csv("us_census_bureau_regions_and_divisions.csv")
+regions_new <- regions %>% select(State, Region)
+states_caps <- toupper(regions_new$State)
+colnames(regions_df) <- c("STATE")
+
+storms_region <- storms_new %>% left_join(regions_df, by=c("State"="STATE"))
+
+```
+```{r regions}
+regions <- read_csv("us_census_bureau_regions_and_divisions.csv")
+
+frequency<- storms_new %>% group_by(STATE)
+region_tib <- as_tibble(regions_up)
+final <- regions_tib %>% 
+  left_join(storms_new,by=c("State"="STATE"),ignore.case=TRUE)
+```
+
+
+
+```{r regions}
+northeast <- group_by(storms_new, storms_new$STATE == "NEW YORK", storms_new$STATE == "NEW HAMPSHIRE", storms_new$STATE == "VERMONT", storms_new$STATE == "MASSACHUSETTS", storms_new$STATE == "RHODE ISLAND", storms_new$STATE == "NEW JERSEY", storms_new$STATE == "PENNYSYLVANIA")
+
+midwest <- select(storms_new, storms_new$STATE == "IOWA", storms_new$STATE == "ILLINOIS", storms_new$STATE == "INDIANA", storms_new$STATE == "KANSAS", storms_new$STATE == "MICHIGAN",  storms_new$STATE == "MINNESOTA", storms_new$STATE == "MISSOURI", storms_new$STATE == "NORTH DAKOTA", storms_new$STATE == "NEBRASKA", storms_new$STATE == "OHIO", storms_new$STATE == "SOUTH DAKOTA", storms_new$STATE == "WISCONSIN")
+```
