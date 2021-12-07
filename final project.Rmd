@@ -9,7 +9,7 @@ output: html_document
 library(tidyverse)
 library(lubridate)
 library(dplyr)
-storms <- read_csv("StormEvents_details-ftp_v1.0_d2020_c20211019.csv")
+storms <- read_csv("data/StormEvents_details-ftp_v1.0_d2020_c20211019.csv")
 problems(storms)
 ```
 
@@ -17,45 +17,89 @@ problems(storms)
 ```{r filter data}
 table(storms$STATE)
 storms_new <- filter(storms, storms$STATE !="PUERTO RICO", storms$STATE !="GUAM") %>% 
-  select(STATE, MONTH_NAME,EVENT_TYPE, CZ_NAME, BEGIN_DATE_TIME, END_DATE_TIME, INJURIES_DIRECT, INJURIES_INDIRECT, DEATHS_DIRECT, DEATHS_INDIRECT, DAMAGE_PROPERTY, DAMAGE_CROPS, MAGNITUDE, MAGNITUDE_TYPE, EPISODE_NARRATIVE)
+  select(STATE, MONTH_NAME,EVENT_TYPE, CZ_NAME, BEGIN_DATE_TIME, END_DATE_TIME, INJURIES_DIRECT, INJURIES_INDIRECT, DEATHS_DIRECT, DEATHS_INDIRECT, DAMAGE_PROPERTY, DAMAGE_CROPS, MAGNITUDE, MAGNITUDE_TYPE, EPISODE_NARRATIVE,BEGIN_DAY, BEGIN_TIME, END_YEARMONTH, END_DAY, END_TIME)
 ```
 
 
 ## Including Plots
 
-```{r plot}
+```{r states}
 # Which states have the most storms in the US？
 storms_new  %>%
   group_by(STATE) %>%
   summarise(count=n()) %>%
   ggplot() + geom_col(aes(STATE,count)) + theme(axis.text.x = element_text(angle = 90))
+
+(big_storms <- storms_new %>%
+  count(STATE, name = "total_number_of_storms") %>%
+  arrange(desc(total_number_of_storms)) %>%
+  top_n(5))
 ```
 
 
 ```{r regions}
 # Which regions have the most storms in the US？
+regions <- read_csv("data/us_census_bureau_regions_and_divisions.csv")
+regions <- regions %>%
+  select(State, Region)
+regions$State = toupper(regions$State)
+storms_new$State = toupper(storms_new$State)
 
-regions <- read_csv("us_census_bureau_regions_and_divisions.csv")
-regions_new <- regions %>% select(State, Region)
-states_caps <- toupper(regions_new$State)
-colnames(regions_df) <- c("STATE")
+storms_region <- storms_new %>%
+  left_join(regions, by = 'State')
 
-storms_region <- storms_new %>% left_join(regions_df, by=c("State"="STATE"))
-
-```
-```{r regions}
-regions <- read_csv("us_census_bureau_regions_and_divisions.csv")
-
-frequency<- storms_new %>% group_by(STATE)
-region_tib <- as_tibble(regions_up)
-final <- regions_tib %>% 
-  left_join(storms_new,by=c("State"="STATE"),ignore.case=TRUE)
+storms_region %>%
+  group_by(Region) %>%
+  summarise(count=n()) %>%
+  ggplot() + geom_col(aes(Region,count))
 ```
 
+```{r months}
+# What months have the most storms?
+storms_new  %>%
+  group_by(MONTH_NAME) %>%
+  summarise(count=n()) %>%
+  ggplot() + geom_col(aes(MONTH_NAME,count)) + theme(axis.text.x = element_text(angle = 90))
+
+(big_months <- storms_new %>%
+  count(MONTH_NAME, name = "total_number_of_storms") %>%
+  arrange(desc(total_number_of_storms)) %>%
+  top_n(5))
+```
 
 
-```{r regions}
-northeast <- group_by(storms_new, storms_new$STATE == "NEW YORK", storms_new$STATE == "NEW HAMPSHIRE", storms_new$STATE == "VERMONT", storms_new$STATE == "MASSACHUSETTS", storms_new$STATE == "RHODE ISLAND", storms_new$STATE == "NEW JERSEY", storms_new$STATE == "PENNYSYLVANIA")
+```{r types}
+# What are the most common types of storms?
+storms_new  %>%
+  group_by(EVENT_TYPE) %>%
+  summarise(count=n()) %>%
+  ggplot() + geom_col(aes(EVENT_TYPE,count)) + theme(axis.text.x = element_text(angle = 90))
+```
 
-midwest <- select(storms_new, storms_new$STATE == "IOWA", storms_new$STATE == "ILLINOIS", storms_new$STATE == "INDIANA", storms_new$STATE == "KANSAS", storms_new$STATE == "MICHIGAN",  storms_new$STATE == "MINNESOTA", storms_new$STATE == "MISSOURI", storms_new$STATE == "NORTH DAKOTA", storms_new$STATE == "NEBRASKA", storms_new$STATE == "OHIO", storms_new$STATE == "SOUTH DAKOTA", storms_new$STATE == "WISCONSIN")
+
+```{r death}
+# What are the number of injuries and deaths in storms?
+injuriesanddeaths <- storms_new %>% unite(injuries_death, INJURIES_DIRECT, INJURIES_INDIRECT, DEATHS_DIRECT, DEATHS_INDIRECT)
+injuriesanddeaths$injuries_deaths <- as.factor(injuriesanddeaths$injuries_death)
+injuriesanddeathsnew <- arrange(injuriesanddeaths, injuries_death)
+
+storms_new  %>%
+summarise(count=n()) %>%
+ggplot(injuriesanddeathsnew, aes_(count, injuries_death)) + geom_boxplot() + labs(x="Number of Purchase", y="Age by City")
+```
+
+
+```{r damage}
+# Damage property among states?
+
+```
+
+
+
+## Prediction Models
+Prediction of each type of storm in different regions 
+
+```{r prediction}
+# 
+
 ```
